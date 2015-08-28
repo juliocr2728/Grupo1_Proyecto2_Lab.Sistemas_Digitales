@@ -1,0 +1,42 @@
+module FiltroFO(
+    input wire clk, reset,
+	input wire [7:0] codigo_tecla,
+	input wire ready,
+	output reg tecla_liberada,
+	output wire estado_tecla_lib
+    );
+	 
+	 localparam
+		 espera_codigo_ruptura = 1'b0,//codigo de ruptura es el F0
+		 espera_codigo_tecla = 1'b1;
+		 //tecla_liberada = 1'b0;
+	 
+	 reg estado_actual, estado_siguiente;
+	 
+	 assign estado_tecla_lib = estado_actual;
+	 
+	 always @(posedge clk, posedge reset)
+		if (reset)
+			estado_actual <= espera_codigo_ruptura;
+		else
+			estado_actual <= estado_siguiente;
+			
+	 always @*
+		begin
+			estado_siguiente = estado_actual;
+			tecla_liberada=1'b0;
+			
+			case (estado_actual)
+				espera_codigo_ruptura:
+					if (ready == 1'b1 && codigo_tecla == 8'b11110000)
+						estado_siguiente = espera_codigo_tecla;
+				espera_codigo_tecla:
+					if (ready == 1'b1 && ~(codigo_tecla == 8'b11110000))//
+						begin
+							estado_siguiente = espera_codigo_ruptura;
+							tecla_liberada = 1'b1;
+						end
+			endcase
+		end
+		
+endmodule 
