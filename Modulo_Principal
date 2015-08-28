@@ -1,0 +1,30 @@
+module Modulo_Principal(
+   
+
+ input wire ps2d,
+	input wire ps2c,
+	input wire rx_en,
+	 input reset,
+	 input clk,
+	output wire [5:0] salida,
+    output wire[1:0] estado_ps2,
+	 output wire estado_tecla_lib
+);
+
+
+wire ready_int;
+ wire [7:0] codigo_tecla_int;
+ wire tecla_liberada_int;
+ 
+ 
+ 
+Teclado Sal_Teclado (.clk(clk), .reset(reset),.ps2d(ps2d), .ps2c(ps2c),.rx_en(rx_en), .rx_done_tick(ready_int), .dout(codigo_tecla_int));
+
+
+FiltroFO FO ( .clk(clk), .reset(reset), .codigo_tecla(codigo_tecla_int), .ready(ready_int) , .tecla_liberada(tecla_liberada_int),.estado_tecla_lib(estado_tecla_lib));
+
+FSMTeclado Filtro_Teclas ( .clk(clk) , .reset(reset) , .ready(tecla_liberada_int), .datos(codigo_tecla_int), .salida(salida));
+
+
+
+endmodule
