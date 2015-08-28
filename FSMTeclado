@@ -1,0 +1,180 @@
+module FSMTeclado(
+   
+
+input wire clk, reset,
+input ready,
+input [7:0] datos,
+output reg [5:0] salida
+);
+
+																								//Declaracion de estado
+    localparam  [2:0]      e0=3'b000, 
+								   e1=3'b001,
+						         e2=3'b010,
+									e3=3'b011,
+									e4=3'b100,
+									e5=3'b101,
+									e6=3'b110;
+									
+
+ 
+																									//Declaración de señal
+   reg [2:0] estado_siguiente,estado_actual;
+	reg [5:0] datos_actual, datos_siguiente;	
+   reg [5:0] salida_siguiente;		
+					
+					//declarar estados salidas
+					
+			always @ (posedge clk , posedge reset )
+    if  (reset) begin
+	 estado_actual <= e0 ;
+	 datos_actual<=6'b000000;
+	salida <= 6'b000000;
+	  end
+    else begin
+	      estado_actual <= estado_siguiente;
+			datos_actual<=datos_siguiente;
+			salida <= salida_siguiente;
+	 end
+	 
+	 
+	 
+	 
+	       always @*
+begin
+			datos_siguiente = datos_actual;
+			salida_siguiente = salida;
+		 estado_siguiente=estado_actual;
+          
+			 case (estado_actual)
+			 	
+		
+			
+			e0: if (datos==8'h29 && ready == 1'b1)      //Pregunta si es espacio
+			begin
+			      estado_siguiente=e1;
+					
+					end
+					else 
+					begin
+					estado_siguiente=e0;
+					end
+			
+			
+			
+			e1: if ((datos== 8'h16 || datos== 8'h45)  && ready == 1'b1)
+			
+			      if (datos==8'h16)
+						datos_siguiente=datos_siguiente | 6'b100000;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b011111;
+						
+						estado_siguiente=e2;
+						end
+					
+			else 
+				
+				estado_siguiente=e1;
+				
+			
+	
+	 
+			e2: if ((datos== 8'h16 || datos== 8'h45) && ready == 1'b1)
+			  if (datos==8'h16)
+						datos_siguiente=datos_siguiente | 6'b010000;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b101111;
+						
+						estado_siguiente=e3;
+						end
+					
+			else 
+				
+				estado_siguiente=e2;
+				
+	 
+			e3: if ((datos== 8'h16 || datos== 8'h45) && ready == 1'b1)
+			  if (datos==8'h16)
+						datos_siguiente=datos_siguiente | 6'b001000;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b110111;
+						
+						estado_siguiente=e4;
+						end
+					
+			else 
+				
+				estado_siguiente=e3;
+				
+		
+		 
+			e4: if ((datos== 8'h16 || datos== 8'h45) && ready == 1'b1)
+			  if (datos==8'h16)
+						datos_siguiente=datos_siguiente | 6'b000100;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b111011;
+						
+						estado_siguiente=e5;
+						end
+					
+			else 
+				
+				estado_siguiente=e4;
+				
+				
+				
+       	
+			e5: if ((datos==8'h15 || datos==8'h1D) && ready == 1'b1)
+			
+			      
+				 if (datos==8'h15)
+						datos_siguiente=datos_siguiente | 6'b000010;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b111101;
+						
+						estado_siguiente=e6;
+						end
+					
+			else 
+				
+				estado_siguiente=e5;
+			
+			e6: if ((datos==8'h24 || datos==8'h2D) && ready == 1'b1)
+		   
+				 if (datos==8'h24)
+						datos_siguiente=datos_siguiente | 6'b000001;
+					
+					else
+						begin
+						datos_siguiente = datos_siguiente & 6'b111110;
+						
+						estado_siguiente=e0;
+						salida_siguiente = datos_siguiente;
+						end
+					
+			else 
+				
+				estado_siguiente=e6;
+			 	
+			 endcase
+		  
+		  
+		  
+		  end
+			   
+	 
+	 
+	 
+	
+
+endmodule
