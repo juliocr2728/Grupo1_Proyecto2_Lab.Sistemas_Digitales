@@ -1,0 +1,16 @@
+module RegistrodatosEntrada(
+   
+	
+	input wire [5:0] Datos_entrada,
+	input wire clk,
+	output reg [5:0] Salida_datos = 6'b000000
+	);
+	always @(posedge clk)
+	begin
+		 Salida_datos <= Datos_entrada; 
+		
+	end
+
+
+
+endmodule
