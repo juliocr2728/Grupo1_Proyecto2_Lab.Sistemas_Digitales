@@ -1,30 +1,87 @@
 module Modulo_Principal(
    
 
- input wire ps2d,
+	input wire ps2d,
 	input wire ps2c,
 	input wire rx_en,
-	 input reset,
-	 input clk,
-	output wire [5:0] salida,
-    output wire[1:0] estado_ps2,
-	 output wire estado_tecla_lib
-);
+	input reset,
+	input clk,
+ 	output Led_Tem,
+	output Led_Sobrecarga,
+	output Led_Humo,
+	output [7:0] ac_salida,
+   output [3:0] ah_salida,
+   output wire estado_tecla_lib, //NO conectar al .UCF
+	output wire [2:0] salidas_prueba, //NO CONECTAR AL .UCF
+	output wire [5:0] salidas_prueba_filtro //NO CONECTAR AL .UCF
+    );
 
-
-wire ready_int;
+ wire ready_int;
  wire [7:0] codigo_tecla_int;
  wire tecla_liberada_int;
+ wire [6:0] salida_filtro;
  
+ assign salidas_prueba_filtro = salida_filtro[5:0]; //assign prueba, se eliminará después
  
- 
-Teclado Sal_Teclado (.clk(clk), .reset(reset),.ps2d(ps2d), .ps2c(ps2c),.rx_en(rx_en), .rx_done_tick(ready_int), .dout(codigo_tecla_int));
+                //Cables de conexión entre salida de eliminador de rebotes y entrada al registro
+wire humo;
+wire sobrecarga;
+wire sal_reset;
 
+assign   salida_filtro [6] = reset ; 
+
+
+					//Cables de conexión entre salida de registro de datos a entradas del deco de datos de temperatura
+
+  
+wire Alarmahumo;
+wire Alarmasobrecarga;
+
+   
+	
+wire salida_clock_eliminador;
+wire [7:0] salida_datos_teclad0;
+wire [5:0] salida_datos_registro;
+wire salida_deco_tem;
+wire salida_clock2Hz;
+wire [3:0] dat_tem;
+
+
+
+
+
+Teclado Sal_Teclado (.clk(clk), .reset(reset),.ps2d(ps2d), .ps2c(ps2c),.rx_en(rx_en), . rx_done_tick(ready_int), .dout(codigo_tecla_int));
 
 FiltroFO FO ( .clk(clk), .reset(reset), .codigo_tecla(codigo_tecla_int), .ready(ready_int) , .tecla_liberada(tecla_liberada_int),.estado_tecla_lib(estado_tecla_lib));
 
-FSMTeclado Filtro_Teclas ( .clk(clk) , .reset(reset) , .ready(tecla_liberada_int), .datos(codigo_tecla_int), .salida(salida));
+FSMTeclado Filtro_Teclas ( .clk(clk) , .reset(reset) , .ready(tecla_liberada_int), .datos(codigo_tecla_int), .salida(salida_filtro [5:0]),.estado(salidas_prueba));
 
 
+RegistrodatosEntrada Datos (.Datos_entrada(salida_filtro [5:0]), .clk(salida_clock2Hz) , .Salida_datos(salida_datos_registro));
 
-endmodule
+Deco_Registros_Entrada Deco_datos_temperatura(.Alarma_Tem(salida_datos_registro[3:0]),.deco(salida_deco_tem));
+
+ 
+ wire  sal_Ahum;
+ wire sal_Atem;
+ wire sal_Asobre;
+ 
+ 
+ 
+Div2Hz Divisor2Hz (.rst(reset),	.clk(clk),.clk_out(salida_clock2Hz));
+
+Maquina_de_Estados FSM ( .clk(salida_clock2Hz), .reset(reset), .Humo(salida_datos_registro[5]), .Sobrecarga_electrica(salida_datos_registro[4]) , .Temperatura(salida_deco_tem), .Alarma_Hum(sal_Ahum) , .Alarma_Sobrecarga(sal_Asobre), .Alarma_Tem(sal_Atem) );
+
+ wire salida_clock400Hz; // reloj 7 segmentos
+ 
+ DivisonReloj7S clock7S (.rst(reset),	.clk(clk),.clk_out(salida_clock400Hz));
+
+ MaqEstados_7S MaqEst7S( .clk(salida_clock400Hz), .reset(reset),.bit_Tem(salida_filtro [3:0]) , .Alarma_Hum(sal_Ahum), .Alarma_S(sal_Asobre), .Alarma_Tem(sal_Atem), .ac(ac_salida),.ah(ah_salida));
+
+
+    assign Led_Tem = sal_Atem;
+	 assign Led_Sobrecarga = sal_Asobre;
+	 assign Led_Humo = sal_Ahum;
+
+ endmodule
+ 
