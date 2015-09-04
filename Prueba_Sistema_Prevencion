@@ -1,0 +1,82 @@
+`timescale 1ns / 1ps
+
+
+
+module Prueba_Sistema_Prevencion;
+
+	// Inputs
+	reg ps2d;
+	reg ps2c;
+	reg rx_en;
+	reg reset;
+	reg clk;
+
+	// Outputs
+	wire Led_Tem;
+	wire Led_Sobrecarga;
+	wire Led_Humo;
+	wire [7:0] ac_salida;
+	wire [3:0] ah_salida;
+	wire estado_tecla_lib;
+	wire [2:0] estado;
+	wire [5:0] spf;
+	
+	//Datos de entrada
+	reg [10:0] ENTRADA [13:0];
+	
+	//Contador para recorrer memoria
+	integer i, j;
+	
+	//Id para el archivo
+	//integer file_id;
+	// Instantiate the Unit Under Test (UUT)
+	Sistema_de_Prevencion uut (
+		.ps2d(ps2d), 
+		.ps2c(ps2c), 
+		.rx_en(rx_en), 
+		.reset(reset), 
+		.clk(clk), 
+		.Led_Tem(Led_Tem), 
+		.Led_Sobrecarga(Led_Sobrecarga), 
+		.Led_Humo(Led_Humo), 
+		.ac_salida(ac_salida), 
+		.ah_salida(ah_salida), 
+		.estado_tecla_lib(estado_tecla_lib),
+		.salidas_prueba(estado),
+		.salidas_prueba_filtro(spf)
+	);
+
+	initial begin
+		//Leer archivo
+      $readmemb("in.txt", ENTRADA);
+		
+		// Initialize Inputs
+		ps2d = 0;
+		ps2c = 1;
+		rx_en = 1;
+		reset = 0;
+		clk = 0;
+		
+		//Mandar los datos en forma serial
+		for (i = 0; i < 14; i = i + 1) begin    // varia conforme el tamaño del arreglo en in.txt
+			for (j = 0; j < 11; j = j + 1) begin
+				ps2c = 1'b1;
+				ps2d = ENTRADA[i][j];
+				#100;
+				ps2c = 1'b0;
+				#100;
+			end
+			ps2c = 1'b1;
+			#600;
+		end
+
+		// Wait 100 ns for global reset to finish
+		#5000;
+        
+		// Add stimulus here
+	end
+	
+	initial forever #1 clk = ~clk; 
+      
+endmodule
+
