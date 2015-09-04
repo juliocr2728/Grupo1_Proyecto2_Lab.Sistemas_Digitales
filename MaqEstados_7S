@@ -1,0 +1,246 @@
+`timescale 1ns / 1ps
+
+module MaqEstados_7S(
+    input wire clk,reset,
+	 input wire Alarma_Hum,
+    input wire Alarma_S,
+    input wire Alarma_Tem,
+	 input wire [3:0] bit_Tem,
+    output reg [7:0] ac = 8'd0,
+    
+    output reg [3:0] ah = 4'b0000
+    
+    );
+																								//Declaracion de estado
+    localparam  [2:0]      e0=3'b000, 
+								   e1=3'b001,
+						         e2=3'b010,
+									e3=3'b011,
+									e4=3'b100,
+									e5=3'b101,
+									e6=3'b110,
+									e7=3'b111;
+
+																								   
+																									//Declaración de señal
+   reg [2:0] estado_siguiente = 3'b000,estado_actual = 3'b000;
+	reg [8:0] contador= 9'd0, contador_sig = 9'd0;
+	
+																									
+																									//Declaración de estados
+																									
+always @ (posedge clk , posedge reset )
+    if  (reset)
+	      begin
+	      estado_actual <= e0 ;
+			contador <= 9'd0;
+			end
+    else begin
+	      estado_actual <= estado_siguiente;
+			contador <= contador_sig;
+	      end
+			
+																					 			  // Siguiente estado
+																								
+always @*
+begin
+																
+ac = 8'b11111111;
+ah =	4'b1111;      
+estado_siguiente=estado_actual;
+contador_sig = contador;
+
+case (estado_actual)
+				
+e0:
+
+
+
+
+
+begin 
+estado_siguiente=e1;
+																								// Representar una A
+		
+		if (Alarma_Tem)
+begin
+			ac= 8'b00010001;
+		   ah =	4'b0111;
+end			
+		else
+
+begin
+		 ac=8'b11111101;
+       ah =	4'b0111;
+end     
+
+end
+			
+			e1: 
+begin 
+		estado_siguiente=e2;
+	if (Alarma_Hum)                                                    // Representar una H
+	begin
+	   ac =  8'b10010001;
+		ah =	4'b1011;
+	end
+   else	
+		begin
+		 ac=8'b11111101;
+       ah =	4'b1011;
+   end  
+end 	
+			
+				e2:  
+		begin      	
+					if (contador==0)			     
+				   begin
+					estado_siguiente=e3;
+					contador_sig=9'd399;
+					end
+					else 
+					begin
+					estado_siguiente=e0; 
+	            contador_sig= contador_sig - 9'd1;
+					end
+	
+			 if (Alarma_S)    //Representar una letra S
+	   begin
+		ac =  8'b01001001;
+		ah =	4'b1101;
+	   
+		end
+		
+		else 
+		
+		begin
+		 ac=8'b11111101;
+       ah =	4'b1101;
+      end  
+end 		
+			//numero izquierda
+        e3:
+begin   
+	if(bit_Tem==4'b0000 || bit_Tem==4'b0001 || bit_Tem==4'b0010 )   //0
+    begin	 
+    	ac =  8'b00000011;
+		ah =	4'b0111;
+			end
+		if ( bit_Tem==4'b0011 || bit_Tem==4'b0100 )	//1
+			
+				begin	 
+    	ac =  8'b11110011;
+		ah =	4'b0111;
+			end
+			if ( bit_Tem==4'b0101 || bit_Tem==4'b0110 || bit_Tem==4'b0111)	//2
+			
+				begin	 
+    	ac =  8'b00100101;
+		ah =	4'b0111;
+			end
+			
+			if ( bit_Tem==4'b1000 || bit_Tem==4'b1001 )	//3
+			
+				begin	 
+    	ac =  8'b00001101;
+		ah =	4'b0111;
+			end
+			
+			if ( bit_Tem==4'b1010 || bit_Tem==4'b1011 || bit_Tem==4'b1100)	//4
+			
+				begin	 
+    	ac =  8'b10011001;
+		ah =	4'b0111;
+			end
+			
+			if ( bit_Tem==4'b1101 || bit_Tem==4'b1110 )	//5
+			
+				begin	 
+    	ac =  8'b01001001;
+		ah =	4'b0111;
+			end
+        
+		  if ( bit_Tem==4'b1111  )	//6
+			
+				begin	 
+    	ac =  8'b01000001;
+		ah =	4'b0111;
+			end		
+		estado_siguiente=e4;
+		
+		end
+			
+			
+			e4:          								// Digito derecha
+			begin 
+			if(bit_Tem==4'b0000 || bit_Tem==4'b0101 || bit_Tem==4'b1010 || bit_Tem==4'b1111 )   //0
+    begin	 
+    	ac =  8'b00000011;
+		ah =	4'b1011;
+			end
+		
+			if ( bit_Tem==4'b0011 || bit_Tem==4'b1000 || bit_Tem==4'b1101)	//2
+			
+				begin	 
+    	ac =  8'b00100101;
+		ah =	4'b1011;
+			end
+			
+		
+			
+			if ( bit_Tem==4'b0001 || bit_Tem==4'b0110 || bit_Tem==4'b1011)	//4
+			
+				begin	 
+    	ac =  8'b10011001;
+		ah =	4'b1011;
+			end
+			
+			
+        
+		  if (bit_Tem==4'b0100 || bit_Tem==4'b1001 ||bit_Tem == 4'b1110)	//6
+			
+				begin	 
+    	ac =  8'b01000001;
+		ah =	4'b1011;
+			end		
+		
+			if ( bit_Tem==4'b0010 || bit_Tem==4'b0111 || bit_Tem==4'b1100)	//8
+			
+				begin	 
+    	ac =  8'b00000001;
+		ah =	4'b1011;
+			end
+		
+		
+		estado_siguiente=e5;
+		
+		end
+			
+			e5:									//Representacion °
+		     	begin
+				ac =  8'b00111001;
+	       	ah =	4'b1101;
+			estado_siguiente=e6;
+			end
+			e6:										//C
+			   begin
+				ac =  8'b01100011;
+	       	ah =	4'b1110;
+			if (contador==0)			     
+				   begin
+					estado_siguiente=e0;
+					contador_sig=9'd399;
+					end
+					else 
+					begin
+					estado_siguiente=e3; 
+	            contador_sig= contador_sig - 9'd1;
+					end
+		
+		end
+			
+			endcase
+			 end
+			
+endmodule
+
