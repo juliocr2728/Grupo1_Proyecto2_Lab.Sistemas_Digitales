@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module Div2Hz(
  input clk,rst,
 	output reg clk_out = 1'b0
